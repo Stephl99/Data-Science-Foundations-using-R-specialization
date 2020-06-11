@@ -1,0 +1,220 @@
+---
+title: "Semana 2"
+author: "Stephany Michell Lobo Laguado"
+date: "21/5/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Estructuras de control
+
+## if - else
+
+En R se puede hacer toda la condición a una variable: 
+
+```{r}
+x <- 2
+y <- if(x > 3){
+  10
+} else {
+  0
+}
+```
+
+## for 
+
+```{r}
+x <- LETTERS[1:4]
+for (i in 1:4) {
+  print(x[i])
+}
+for (i in seq_along(x)) {
+  print(x[i])
+}
+for (letter in x) {
+    print(letter)
+}
+for (i in 1:4) print(x[i])
+```
+
+## While
+
+Se debe usar cuidadosamente, evitandolo cuando es díficil ponerle un límite
+
+```{r}
+z <- 5
+while (x >= 3 && z <= 10) {
+  print(z)
+  coin <- rbinom(1,1, 0.5)
+  if (coin == 1) {
+    z <- z + 1
+  } else {
+    z <- z - 1
+  }
+}
+```
+
+## Estructuras de control
+
+1. **repeat:** inicia un ciclo infinito que solo puede parar con un **break**.
+2. **next:** es usado para omitir una iteración en un ciclo.
+3. **return:** para una función y devuelve algún valor.
+
+## Funciones 
+
+```{r}
+add2 <- function(x,y){
+  x + y
+}
+
+add2(1,2)
+
+above <- function(x,n){
+  use <- x > n
+  x[use]
+}
+
+above(1:20,15)
+
+columnmean <- function(y, removeNA = TRUE){
+  nc <- ncol(y)
+  means <- numeric(nc)
+  for (i in 1:nc) {
+    means[i] <- mean(y[,i], na.rm = removeNA)
+  }
+  means
+}
+
+columnmean(airquality)
+```
+
+## Lexical vs. Dynamic Scoping
+
+```{r}
+y <- 10
+f <- function(x){
+  y <- 2
+  y^2 + g(x)
+}
+g <- function(x){
+  x * y
+}
+
+f(3)
+```
+
+## Fechas y horas en R
+
+Todas las fechas están almacenadas como el número de días desde el 1 de Enero de 1970 y todas las horas como el número de segundos desde ese día.  
+
+Las fechas son de la clase `date` y las horas pueden ser LOGIXct (representadas como números muy largos) o LOGIXlt (representadas como listas pero con información adicional); se puede cambiar entre estas usando `as.POSIXct` o `as.POSIXlt`.  
+
+Algunas funciones que permiten trabajar con fechas y horas son:  
+
+* `weekdays`: da el día de la semana.
+* `months`: da el nombre del mes.
+* `quarters`: da el cuarto correspondiente al trimeste del año:
+  + Q1: enero - marzo.
+  + Q2: abril - junio.
+  + Q3: julio - septiembre.
+  + Q4: octubre - diciembre.
+
+```{r}
+x <- as.Date("1970-01-01")
+x
+unclass(x)
+```
+
+```{r}
+FALSE || TRUE && 6 != 4 || 9 > 4
+
+```
+
+## Creaci�n de operadores binarios
+
+Se crean como una funci�n con su normbe entre comillas:
+
+```{r}
+"%p%" <- function(left,right){ # Remember to add arguments!
+  paste(left,right)
+}
+"I" %p% "love" %p% "R!"
+```
+
+## Quiz
+
+1. The number 27 is returned.
+
+```{r}
+cube <- function(x, n) {
+        x^3
+}
+cube(3)
+```
+
+2. The following code will produce a warning in R because x is a vector of 10 and if can only test a single logical statement.
+
+```{r}
+x <- 1:10
+if(x > 5) {
+        x <- 0
+}
+```
+
+3. Answer: 10.
+
+```{r}
+f <- function(x) {
+        g <- function(y) {
+                y + z
+        }
+        z <- 4
+        x + g(x)
+}
+z <- 10
+f(3)
+```
+
+4. Answer: 10.
+
+```{r}
+x <- 5
+y <- if(x < 3) {
+        NA
+} else {
+        10
+}
+```
+
+5. Answer: f.
+
+```{r}
+h <- function(x, y = NULL, d = 3L) {
+        z <- cbind(x, d)
+        if(!is.null(y))
+                z <- z + y
+        else
+                z <- z + f
+        g <- x + y / z
+        if(d == 3L)
+                return(g)
+        g <- g + 10
+        g
+}
+```
+
+6. What is an environment in R? a collection of symbol/value pairs.
+
+7. The R language uses what type of scoping rule for resolving free variables? lexical scoping.
+
+8. How are free variables in R functions resolved? The values of free variables are searched for in the environment in which the function was defined.
+
+9. What is one of the consequences of the scoping rules used in R? All objects must be stored in memory.
+
+10. In R, what is the parent frame? It is the environment in which a function was called.
+
+
+

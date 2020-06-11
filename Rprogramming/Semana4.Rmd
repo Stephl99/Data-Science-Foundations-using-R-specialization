@@ -1,0 +1,189 @@
+---
+title: "Semana 4"
+author: "Stephany Michell Lobo Laguado"
+date: "7/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Función str()
+
+Es una función útil para visualizar objetos, ya que muestra de manera compacta la estructura interna de este; se puede usar como alternativa de la funció `summary()`. Su objetivo es producir al menos una línea por objeto básico en la salida y se puede utilizar sobre otras funciones. Al aplicar `str()` sobre una matriz, los elementos que se muestran corresponden a la primera columna.
+
+```{r}
+library(datasets)
+str(airquality)
+s <- split( airquality, airquality$Month)
+#str(s)
+```
+
+# Generación de números aleatorios
+
+1. `rnorm()`: simula variables aleatorias de distribución normal con determinadas media y desviación estándar.
+
+2. `dnorm()`: puede ser usada para evaluar la densidad de probabilidad.
+
+3. `pnorm()`: evalua la función de distribución acumulada para una distribución normal.
+
+4. `rpois()`: genera variables aleatorias de distribución Poisson con una determinada frecuencia.
+
+Para cada una de las funciones de distribución de probabilidad existen cuatro funciones asociadas con ellas. Estas funciones vienen prefijadas como:  
+
+* `d` para densidad de probabilidad.
+
+* `r` para generación de números aleatorios.
+
+* `p` para distribución acumulada.
+
+* `q` para función de cuantiles.
+
+Al generar números aleatorios, es importante sembrar una semillas, esto con el fin de reproducir ciertos resultados más adelante.
+
+```{r}
+set.seed(1)
+rnorm(3)
+
+rnorm(3)
+
+set.seed(1) 
+rnorm(3) # se reproducen los resultados de la primera generación de números aleatorios
+```
+
+```{r}
+# Generando datos de distribución Poisson
+
+rpois(5,1)
+
+ppois(2,2) # distribución acumulada P(x <= 2)
+
+ppois(4,2) # P(x <= 4)
+
+ppois(6, 2) # P(x <= 6)
+
+```
+
+##  Simulando un modelo lineal
+
+Supongamos que queremos simular el siguiente modelo lineal:  
+
+$$y = \beta_0 + \beta_1 x + \epsilon $$ 
+donde $\epsilon$ ~ $N(0, 2^2)$, asumiendo que $x$ ~ $N(0, 1^2), \beta_0 = 0.5$ y $\beta_1 = 2$.
+
+```{r}
+set.seed(20)
+x <- rnorm(100)
+e <- rnorm(100, 0, 2)
+y <- 0.5 + 2 * x + e
+summary(y)
+plot(x,y, pch=20)
+
+# Si x siguiera una distribución binomial
+set.seed(10)
+x <- rbinom(100, 1, 0.5)
+e <- rnorm(100, 0, 2)
+y <- 0.5 + 2 * x + e
+summary(y)
+plot(x,y, pch = 20)
+```
+
+Supongamos que queremos simular un modelo Poisson donde  
+
+$$ y = Poisson(\mu) $$
+$$ log(\mu) = \beta_0 + \beta_1 x $$
+y $\beta_0 = 0.5, \beta_1 = 0.3$. Para esto necesitamos usar la función `rpois()`:
+
+```{r}
+set.seed(1)
+x <- rnorm(100)
+log.mu <- 0.5 + 0.3 * x
+y <- rpois(100, exp(log.mu))
+summary(y)
+plot(x, y, pch = 20)
+```
+
+# Muestreo aleatorio
+
+La función `sample()` permite sacar aleatoriamente un elemento o conjunto de elementos de un conjunto especificado.
+
+```{r}
+set.seed(1)
+sample(1:10, 4)
+sample(1:10, 4, replace = TRUE) # muestra con reemplazo
+```
+
+Si no se especifica el tamaño de la muestra, esta función saca una permutación aleatoria del conjunto dado:
+
+```{r}
+sample(1:10)
+```
+
+# Perfilador de Código
+
+Es una herramienta muy útil para determinar la razón por la cual un código se está demorando y sugerir estrategias para arreglar el problema. Devuelve un objeto de la clase `proc_time`:
+
+1. **user time:** se refiere a la cantidad de tiempo que es cargada en el CPU con el fin de ejecutar esta expresión.
+
+2. **elapsed time:** "walk clock" time, es la cantidad de tiempo ques e experimenta como usuario.
+
+Generalmente estos dos anteriores son relativamente cercanos.
+
+## La función sys.time()
+
+Toma una expresión arbitraria en R y la evalúa para decir la cantidad de tiempo que se demoró en ser evaluada. Si hay un error en el proceso de código entonces se obtiene el tiempo hasta que ocurre este.
+
+```{r}
+## Elapsed time > user time
+system.time(readLines("http://www.jhsph.edu"))
+
+## Elapsed time < user time
+hilbert <- function(n){
+  i <- 1:n
+  1 / outer(i - 1, i, "+")
+}
+#hilbert(1000)
+system.time(svd(x))
+
+## Elapsed time = user time
+system.time({
+  n <- 1000
+  r <- numeric(n)
+  for (i in 1:n) {
+    x <- rnorm(n)
+    r[i] <- mean(x)
+  }
+})
+```
+
+El problema de la función `system.time()` es que asume que se sabe donde está el proble, esto llev a que sea útil con problemas que tengas poca complejidad. Para mayor complejidad existen otras funciones.
+
+## R profiler
+
+La función `Rprof()` arranca el analizador de R, este es útil en situaciones en las que el código tarda demasiado tiempo en ejecutarse y básicamente lo que hace es que imprime la pila de llamadas a funciones.
+
+Normalmente es díficil leer la salida de esta función, por lo que suele usarse la función `summaryRprof()` para tabular esta salida y clacular cuanto tiempo gastó cada función que se llamó. Hay dos formas de normalizar estos datos:
+
+* `by.total` divide el tiempo gastado por cada función entre el total del tiempo gastado.
+
+* `by_self` hace lo mismo pero primero se resta el tiempo gastado en funciones precedentes en la pila de llamadas; este suele ser más interesante porque da una idea más precisa de cuáles son realmente las funciones que consumen la mayoría del tiempo, para así identificarlas y optimizarlas más adelante.
+
+La función `sample.interval` da el intervalo de tiempo que se usó para imprimir la pila de llamadas a funciones y la función `sampling.time` da el tiempo total de ejecución de la expresión.
+
+Si nuestro código de R llama código de C o Fortran, este no uede ser analizado.
+
+# Quiz
+
+```{r}
+set.seed(1)
+rpois(5, 2)
+```
+
+# Swirl  
+
+Base de datos de plantas: [plantas](http://plants.usda.gov/adv_search.html)
+
+Página con información sobre gráficos [gráficos](http://www.ling.upenn.edu/~joseff/rstudy/week4.html)
+
+

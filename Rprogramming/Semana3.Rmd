@@ -1,0 +1,270 @@
+---
+title: "Semana 3"
+author: "Stephany Michell Lobo Laguado"
+date: "6/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Funciones de bucle
+
+## lapply()
+
+Toma tres argumentos:
+
+1. Una lista (si el objeto no es una lista debemos pasarlo a una lista con la función as.list(), si no se puede entonces la función generará un error).  
+2. Una función.  
+3. Otros argumentos.  
+
+```{r}
+x <- list(a = 1:5, b = rnorm(10))
+lapply(x, mean)
+```
+
+La función lapply() siempre devuelve listas.
+
+```{r}
+x <- 1:4
+lapply(x, runif, min = 0, max = 10)
+
+```
+
+## Funciones anónimas  
+
+Con las funciones de bucle suelen usarse frecuentemente las funciones anónimas, que son funciones que no tienen nombre y son generadas a media que va corriendo el código.
+
+```{r}
+x <- list(a = matrix(1:4, 2, 2), b = matrix(1:6, 3, 2))
+lapply(x, function(elt) elt[, 1])
+```
+
+## sapply()
+
+Trata de simplificar los resultados de lapply() si esto es posible. En lapply() el resultado es siempre una lista, pero si por ejemplo esta lista solo tuviera elementos de longitud 1, sapply() devolvería en lugar de una lista, un vector con esos elementos.  
+
+```{r}
+x <- list(a = 1:4, b = rnorm(10), c = rnorm(20, 1), d = rnorm(100, 5))
+lapply(x, mean)
+sapply(x, mean)
+```
+
+## apply()
+
+Es usada para aplicar una función sobre los margenes de un arreglo. Usualmente se usa para aplicar una función sobre las filas o columnas de una matriz. Usar apply() nos ahorra escribir código, en comparación con un bucle for. La función apply() consta de los siguientes argumentos:  
+
+1. X: un arreglo.  
+2. MARGIN: es un vector de enteros que definen los margenes que se deberían recuperar.  
+3. FUN: la función que será aplicada.  
+4. ...: Otros argumentos de la función.  
+
+```{r}
+x <- matrix(rnorm(200), 20, 10)
+apply(x, 1, sum) # suma de las filas de la matriz
+apply(x, 2, mean) # promedio de las columnas de la matriz
+```
+
+Para el cálculo de una suma o promedio de una fila o columna existen funciones especiales:
+
+1. `rowSums() = apply(x, 1, sum)`.  
+2. `rowMeans() = apply(x, 1, mean)`.  
+3. `colSums() = apply(x, 2, sum)` .
+4. `colMeans() = apply(x, 2, mean)`.
+
+#### Cuantiles de las filas de una matriz
+
+```{r}
+x <- matrix(rnorm(200), 20, 10)
+apply(x, 1, quantile, probs = c(0.25, 0.75))
+
+a <- array(rnorm(2 * 2 * 10), c(2, 2, 10))
+apply(a, c(1,2), mean) # da como resultado una matriz con el promedio sobre la tercera dimensión
+rowMeans(a, dims = 2)
+```
+
+## mapply()
+
+la idea de esta función de bucle es aplicar una fucnión en paralelo sobre un conjuntode distintos argumentos. Esta función puede tomar múltiples listas como argumetnos y aplicar una función a los elementos de esas múltiples listas en paralelos. Los argumentos de esta función son:  
+
+1. FUN: La función que se quiere aplicar.
+2. ... : listas a las que se le aplica la función.
+3. MoreArgs: más argumentos de FUN.
+4. SIMPLIFY: como deberían mostrarse los reusltados (simplificados).
+
+```{r}
+list(rep(1,4), rep(2,3), rep(3,2), rep(4,1))
+mapply(rep, 1:4, 4:1)
+```
+
+`mapply()` puede usarse para aplicar una función a múltiples conjuntos de elementos.
+
+```{r}
+noise <- function(n, mean, sd){
+  rnorm(n, mean, sd)
+}
+noise(5, 1, 2)
+noise(1:5, 1:5, 2) # no funciona bien cuando se pasan vectores como argumentos, ya que lo que realmente queremos que ase es tener un número aleatorio con distribución normal y media 1, dos números aleatorios con distribución normal y media 2, y asi sucesivamente.
+
+mapply(noise, 1:5, 1:5,2) # s eusa la función mapply() para vectorizar la función noise()
+
+# notar que la desviación estándar qeda fijada como 2, mientras que n y mean van variando de 1 a 5. Es lo mismo que si llamaramos la función noise() mediante una lista, camaindo los valores de n y mean.
+```
+
+## tapply()
+
+Es muy útil para aplcar una función a subconjunto de un vector. Sus argumentos son:
+
+1. X: un vector.  
+2. INDEX: un factor o una lista de factores.
+3. FUN: la función que se va a aplicar.
+4. ...: otros argumentos de FUN.
+5. SIMPLIFY: si el resultado debería ser simplificado.
+
+```{r}
+x <- c(rnorm(10), runif(10), rnorm(10,1))
+f <- gl(3,10) # gl() es una función que genera factores especificando los patrones y sus niveles.
+f
+tapply(x, f, mean) # permite obtener la media de cada uno de los grupos pertenecientes a x, si el resultado no se simplifica, el resultado devolverá una lista, cmo se simplifica por defecto, el resultado devuelve un vector.
+```
+
+## Función split
+
+Toma un vector u otro objeto y lo parte en grupos determinados por algún factor o factores. Sus argumentos son:  
+
+1. X: un vector, lista o data frame.
+2. f: un factor o lista de factores.
+3. drop: indica si los niveles de factores vacíos deberían ser drenados.
+
+```{r}
+x <- c(rnorm(10), runif(10), rnorm(10,1))
+f <- gl(3,10)
+split(x,f)
+```
+
+La función split siempre devuelve una lista, a la cual se le puede aplicar funciones como `lapply()` o `sapply()`.
+
+```{r}
+lapply(split(x,f), mean)
+```
+
+Esta función es útil para separar tipos de objetos más complicados, como data frames:
+
+```{r}
+library(datasets)
+head(airquality)
+# si quisieramos por ejemplo, calcular el promedio de alguna variable por cada uno de los meses, deberíamos primero particionar la base de datos respecto al mes:
+
+s <- split(airquality, airquality$Month)
+lapply(s, function(x) {colMeans(x[, c("Ozone", "Solar.R", "Wind")])})
+
+# al hacer esto con la función sapply() el resultado se simplifica en una tabla, además, se removieron los valores faltantes:
+
+sapply(s, function(x) {colMeans(x[, c("Ozone", "Solar.R", "Wind")], na.rm = TRUE)})
+```
+
+## Función split con más de un nivel
+
+```{r}
+x <- rnorm(10)
+
+# gl() es una función que genera factores especificando los patrones y sus niveles.
+f1 <- gl(2, 5)
+f2 <- gl(5, 2)
+
+# interaction() es una función que calcula un factor que representa la interacción  entre otros factores dados. El resultado está siempre desordenado.
+interaction(f1, f2)
+
+# separación del vector x según los diferentes niveles
+# notar que cuando se usa la función split() no es necesario usar la función interaction().
+str(split(x, list(f1, f2)))
+
+# al tomar drop = TRUE se eliminan los niveles que quedaron vacíos en la partición
+str(split(x, list(f1, f2), drop = TRUE))
+```
+
+# Herramientas de depuración
+
+## Indicaciones de que existen problemas en el código
+
+1. `message`: notificación controlada de que quizás algo ha ocurrido. No para la ejecución del código.
+2. `warning`: alguna indicación de que ha ocurrido algo inesperado. No para el código. (quizás se debe a que surge algo diferente a lo que se esperaba).
+3. `error`: ocurrencia de algún problema fatal. Detiene la ejecución de la función.
+4. `condition`: concepto genérico par aindicar que algo inesperado puede ocurrir. Se pueden personalizar.
+
+Las funciones principales de depuración en R son:
+
+1. `traceback`: imprime lo que se conoce como pila de llamadas. Te dice cuántas llamadas a otras funciones se han hecho y dónde ha ocurrido el error.
+
+2. `debug`: se le pasa una función como argumento y la marca para modo depuración, cada vez que se ejecuta se para el procedimiento y se uede ir mirando como esta se ejecuta línea por línea. Se puede llamar esta función incluso cuando ya estamos en el depurador.
+
+3. `browser`: se puede insertar esta función en cualquier parte del código y cuando se alcance esa línea, la ejecución de la función se suspenderá, comenzando a avanzar línea por línea desde allí.
+
+4. `trace`: permite insertar código de depuración en una función sin llegar a editar la función en sí misma. Suele ser útil si se está depurando el código de otra persona.
+
+5. `recover`: es un manejador de errores. Cada vez que encontramos un error, en lugar de volver a la consola, que es el comportamiento por defecto, el interprete de R detendrá la función justo en el punto en que ha ocurrido el error y la pausará en ese punto.
+
+Estas funciones permiten separar los pequeños detalles, las líneas de código, e intentar descubrir en qué punto se encuentra exactamente  el error de programación. También se puede obtener información sobre los problemas si se ejecutan prints a medida que va corriendo la función, epro no es muy útil si se tiene un código muy largo.
+
+```{r}
+# Ejemplo de la función traceback()
+lm(y ~ x)
+traceback()
+
+# Ejemplo de la función debug()
+debug(lm)
+lm(y ~ x)
+
+# Ejemplo de la función recover()
+
+## Se puede configurar la función recover como manejador de errores utilizando la función options, esto se configura como función global hasta que se reincie la sesión de R:
+
+### options(error = recover)
+### read.csv("nosuchfile")
+```
+
+# Quiz
+
+1. Take a look at the 'iris' dataset that comes with R. The data can be loaded with the code:
+
+```{r}
+library(datasets)
+data(iris)
+?iris
+tapply(iris$Sepal.Length, iris$Species, mean)
+```
+
+There will be an object called 'iris' in your workspace. In this dataset, what is the mean of 'Sepal.Length' for the species virginica? 7.
+
+2. Continuing with the 'iris' dataset from the previous Question, what R code returns a vector of the means of the variables 'Sepal.Length', 'Sepal.Width', 'Petal.Length', and 'Petal.Width'?
+
+```{r}
+apply(iris[,1:4], 2, mean)
+```
+
+3. Load the 'mtcars' dataset in R with the following code
+
+```{r}
+library(datasets)
+data(mtcars)
+?mtcars
+
+sapply(split(mtcars$mpg, mtcars$cyl), mean)
+
+with(mtcars, tapply(mpg, cyl, mean))
+
+tapply(mtcars$mpg, mtcars$cyl, mean)
+```
+
+4. Continuing with the 'mtcars' dataset from the previous Question, what is the absolute difference between the average horsepower of 4-cylinder cars and the average horsepower of 8-cylinder cars?
+
+```{r}
+s <- sapply(split(mtcars$hp, mtcars$cyl), mean)
+s[1] - s[3]
+```
+
+5. If you run `debug(ls)` what happens when you next call the 'ls' function?
+
+Execution of ls will suspend at the beginning of the function and you will be in the browser.
+
