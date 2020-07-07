@@ -1,0 +1,254 @@
+---
+title: "Semana 3.2"
+author: "Stephany Michell Lobo Laguado"
+date: "4/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Easier cutting
+
+```{r}
+library(Hmisc)
+restdata <- read.csv("./data/RestaurantsWeek3.csv")
+restdata$zipGroups <- cut2(restdata$zipCode,g=4)
+table(restdata$zipGroups)
+```
+
+## Creating factor variables
+
+```{r}
+# en la base de datos recien leida ZipCode es de tipo int pero se puede cambiar a factor
+restdata$zcf <- factor(restdata$zipCode)
+restdata$zcf[1:10]
+class(restdata$zcf)
+```
+
+## Levels of factor variables
+
+```{r}
+yesno <- sample(c("yes","no"),size=10,replace=TRUE)
+yesnofac <- factor(yesno,levels=c("yes","no"))
+relevel(yesnofac,ref="no")
+as.numeric(yesnofac)
+
+```
+
+## Cutting produces factor variables
+
+```{r}
+restdata$zipGroups = cut2(restdata$zipCode,g=4)
+table(restdata$zipGroups)
+```
+
+## Using the mutate function
+
+Se puede usar la función `mutate()` para crear una nueva versión de una variale y simultáneamente, añadirla a la base de datos. 
+
+```{r}
+library(plyr)
+restdata2 <- mutate(restdata,zipGroups=cut2(zipCode,g=4))
+table(restdata2$zipGroups)
+```
+
+## Common transforms
+
+* `abs(x)` valor absoluto.
+* `sqrt(x)` raíz cuadrada.
+* `ceiling(x)` función techo (3.475 es 4).
+* `floor(x)` función piso (3.475 es 3).
+* `round(x,digits=n)` redondeo (`round(3.475,digits=2)` es 3.48).
+* `signif(x,digits=n)` redondeo a partir de cifras significantes (`signif(3.475,digits=2)` es 3.5.)
+* `cos(x), sin(x)` etc.
+* `log(x)` logaritmo natural.
+* `log2(x)`, `log10(x)` otro logaritmos comunes.
+* `exp(x)` exponencial.
+
+[http://www.biostat.jhsph.edu/~ajaffe/lec_winterR/Lecture%202.pdf](http://www.biostat.jhsph.edu/~ajaffe/lec_winterR/Lecture%202.pdf)
+[http://statmethods.net/management/functions.html](http://statmethods.net/management/functions.html)
+
+## Notas y otros recursos
+
+* A tutorial from the developer of plyr - [http://plyr.had.co.nz/09-user/](http://plyr.had.co.nz/09-user/)
+* Andrew Jaffe's R notes [http://www.biostat.jhsph.edu/~ajaffe/lec_winterR/Lecture%202.pdf](http://www.biostat.jhsph.edu/~ajaffe/lec_winterR/Lecture%202.pdf)
+* A nice lecture on categorical and factor variables 
+
+# Reshaping data
+
+
+## El objetivo son los datos ordenados 
+
+1. Cada variable forma una columna.
+2. Cada observación forma una fila.
+3. Cada tabla / archivo almacena datos sobre un tipo de observación (por ejemplo, personas / hospitales).
+
+## Start with reshaping
+
+```{r}
+library(reshape2)
+head(mtcars)
+```
+
+
+## Derretir bases de datos
+
+```{r}
+mtcars$carname <- rownames(mtcars)
+
+# se usa la funcion melt y lo que se puede hacer es crear un monton de valores de ID, especificando las variables que indican esto y luego las variables correspondientes a medidas. Basicamente lo que se hace es reformar la base de datos de forma que queda delgado (din tantas columnas) y alargado (con muchas filas) ya que tenemos una fila para cada valor de mpg y para cada valor de hp
+carMelt <- melt(mtcars,id=c("carname","gear","cyl"),measure.vars=c("mpg","hp"))
+head(carMelt,n=3)
+tail(carMelt,n=3)
+
+```
+[http://www.statmethods.net/management/reshape.html](http://www.statmethods.net/management/reshape.html)
+
+## Fundir bases de datos
+
+Una vez que se "derrite" la base de datos, esta puede ser "fundida" en una gran variedad de formas. Básicamente, podemos reformatear el conjunto de datos en diferentes tipos de formas.
+
+```{r}
+# La función dcast reestructurará el conjunto de datos en una forma particular. Se le pasa como primer argumento la base de datos "derretida". Y si or ejemplo, quisieramos ver la variable cilindros desglosada por las diferentes variables, así que se pone cyl ~ variable. Lo que hace esto es básicamente resumir la base de datos. Lo hace por defecto por enlace
+cylData <- dcast(carMelt, cyl ~ variable)
+cylData
+
+# se puede hacer tambien esto con diferentes medidas, lo que se necesita es especificar la medida que se requiera
+cylData <- dcast(carMelt, cyl ~ variable,mean)
+cylData
+```
+
+Basicamente lo que se hace es tomar los datos y resumirlos y reorganizarlos de distintas maneras.
+
+## Promediando valores
+
+```{r}
+head(InsectSprays)
+
+# hace la cuenta total para cada tipo de spray 
+tapply(InsectSprays$count,InsectSprays$spray,sum)
+```
+
+[http://www.r-bloggers.com/a-quick-primer-on-split-apply-combine-problems/](http://www.r-bloggers.com/a-quick-primer-on-split-apply-combine-problems/)
+
+## Otra forma con la función split
+
+```{r}
+# se toma la cuenta y se parte entre los diferentes tipos de spray. Se debe recordar que la función split devuelve una lista, asi que cada elemento de esa lista corresponde a un tipo diferente de spray
+spIns <-  split(InsectSprays$count,InsectSprays$spray)
+spIns
+
+# luego se puede sumar la cuenta para cada elemento de la lista, que corresponde a cada tipo de spray
+sprCount <- sapply(spIns,sum) # tambien se puede usar lapply(), pero este retorna una lista, que se puede volver vector con la función unlist().
+sprCount
+```
+
+## Otra forma con el paquete plyr
+
+```{r}
+library(plyr)
+# primero se escribe la base de datos, luego la varaible que se quiere resumir, por eso se pone el argumento summarize y por último la función que se le quiere aplicar
+ddply(InsectSprays,"spray",summarize,sum=sum(count))
+
+```
+
+## Creación de una nueva variable
+
+Lo anterior puede ser usado para calcular valores y aplicarlos a cada variable. 
+```{r}
+# La función ave() saca promedios de grupo sobre combinaciones de factores de nivel. En este caso, la función ave se aplica para contar, donde la subfunción es suma. En vez de obtener una tabla solo con la suma de los valores para cada tipo de spray, se obtiene una tabla de la misma longitud del data frame original, en donde cada valor del tipo de spray tiene a suma total de este tipo de spray
+spraySums <- ddply(InsectSprays, "spray", summarize,sum=ave(count,FUN=sum))
+dim(spraySums)
+head(spraySums)
+```
+## Más información
+
+* A tutorial from the developer of plyr - [http://plyr.had.co.nz/09-user/](http://plyr.had.co.nz/09-user/)
+* A nice reshape tutorial [http://www.slideshare.net/jeffreybreen/reshaping-data-in-r](http://www.slideshare.net/jeffreybreen/reshaping-data-in-r)
+* A good plyr primer - [http://www.r-bloggers.com/a-quick-primer-on-split-apply-combine-problems/](http://www.r-bloggers.com/a-quick-primer-on-split-apply-combine-problems/)
+* __Otras funciones:__
+  * acast - para lanzar como matrices multidimensionales.
+  * arrange - para un reordenamiento más rápido sin usar los comandos order().
+  * mutate - para agrgar nuevas variables.
+  
+# Gestión de marcos de datos con dplyr - Herramientas básicas
+
+```{r}
+library(dplyr)
+
+```
+
+# Unión de bases de datos 
+
+## Datos de revisión por pares
+
+```{r}
+if(!file.exists("./data")){dir.create("./data")}
+fileUrl1 <- "https://s3.amazonaws.com/csvpastebin/uploads/e70e9c289adc4b87c900fdf69093f996/reviews.csv"
+
+fileUrl2 <- "https://s3.amazonaws.com/csvpastebin/uploads/0863fd2414355555be0260f46dbe937b/solutions.csv"
+download.file(fileUrl1,destfile="./data/reviews.csv",method="curl")
+download.file(fileUrl2,destfile="./data/solutions.csv",method="curl")
+reviews = read.csv("./data/reviews.csv"); solutions <- read.csv("./data/solutions.csv")
+head(reviews,2)
+head(solutions,2)
+```
+## Unión de los datos - merge() 
+
+En los nombres de la primera base de datos se puede apreciar que hay una variable llamada solution_id, la cual puede ser usada con la varaible id de la segunda base de datos para unirlas.
+
+```{r}
+names(reviews)
+names(solutions)
+
+# La funcion merge() se utiliza para unir bases de datos. Algunos parametros importantes que tiene son x, y, by.x, by.y, all, estos parametros sirven para decirle a la funcion por cual de las columnas se deberian fusionar los datos. Por defecto se hace la fusión por todas las columnas que tienen un nombre comun
+
+## Uso de la funcion merge() para unir las bases de datos. by.x especifica la variable por la que se une la primera base de datos y by.y especifica la varaible por la que se une la segunda base de datos. all = TRUE indica que si hay algún valor que aparece en uno pero no en el otro, se debe incluir otra fila pero con valores de na para los valores que faltan o no aparecen en el otro marco de datos.
+mergedData = merge(reviews,solutions,by.x="solution_id",by.y="id",all=TRUE)
+head(mergedData)
+```
+
+## Predeterminado: fusionar todos los nombres de columna comunes
+
+El valor predeterminado es fusionarse en función de todos los nombres de columna comunes. Entonces, si hace una intersección de los nombres del marco de datos de las soluciones y los nombres del marco de datos de las revisiones, se obtendrán cuatro variables.
+
+```{r}
+intersect(names(solutions),names(reviews))
+
+# si intenta fusionar sin decirle a qué se debe basar, intentará fusionarse a partir de las cuatro variables anteriores. Lo que termina sucediendo es que la variable id coincidirá a veces entre los dos conjuntos de datos. Pero los tiempos de inicio y parada no necesariamente coincidirán, entonces lo que se termina haciendo es crear un marco de datos más grande que aplica varias filas.
+mergedData2 = merge(reviews,solutions,all=TRUE)
+head(mergedData2)
+```
+
+
+## Utilizando join en el paquete plyr
+
+Es más rápido, pero con menos funciones completas: el valor predeterminado es la unión izquierda. Básicamente solo permite mezclar filas comun con nombres comúnes de variable en el marco de datos.
+
+```{r}
+library(plyr)
+df1 = data.frame(id=sample(1:10),x=rnorm(10))
+df2 = data.frame(id=sample(1:10),y=rnorm(10))
+arrange(join(df1,df2),id)
+
+# si se tiene múltiples data frames
+df1 = data.frame(id=sample(1:10),x=rnorm(10))
+df2 = data.frame(id=sample(1:10),y=rnorm(10))
+df3 = data.frame(id=sample(1:10),z=rnorm(10))
+dfList = list(df1,df2,df3)
+join_all(dfList)
+```
+
+## More on merging data
+
+* The quick R data merging page - [http://www.statmethods.net/management/merging.html](http://www.statmethods.net/management/merging.html)
+* plyr information - [http://plyr.had.co.nz/](http://plyr.had.co.nz/)
+* Types of joins - [http://en.wikipedia.org/wiki/Join_(SQL)](http://en.wikipedia.org/wiki/Join_(SQL))
+
+# Swirl
+
+Paper sobre tidyr: http://vita.had.co.nz/papers/tidy-data.pdf
+
+Base de datos SAT: http://research.collegeboard.org/programs/sat/data/cb-seniors-2013

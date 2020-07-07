@@ -1,0 +1,306 @@
+---
+title: "Semana 4"
+author: "Stephany Michell Lobo Laguado"
+date: "4/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Edición de variables de texto 
+
+Un paso de limpieza de datos muy común es tener variables de texto que estén en una especie de formato desagradable o que tengan espacios,puntos adicionales o guiones bajos que se necesiten eliminar.
+
+## Arreglo de vectores de carácteres - `tolower()` , `toupper()`
+```{r}
+cameraData <- read.csv("./data/cameras.csv")
+names(cameraData)
+
+## Pasar todos los nombres de variables a letras minusculas, el comando toupper() pasa las letras a mayusculas
+tolower(names(cameraData))
+```
+
+## Arreglo de vectores de carácteres - `strsplit()` 
+
+* Es bueno para dividir nombres de variables automáticamente.
+* Parámetros importantes: x, split.
+
+```{r}
+# Para especificar que el punto es lo que separa la string de la variable se debe usar \\ ya que el punto es un carácter reservado
+splitNames <- strsplit(names(cameraData),"\\.")
+splitNames[[5]]
+splitNames[[6]]
+```
+
+## Hacia un lado rápidamente - listas
+
+Una cosa que es posible que desee hacer es revisar, configurar y simplemente tomar la parte del nombre de la variable que no tiene el punto.
+
+```{r}
+mylist <- list(letters = c("A", "b", "c"), numbers = 1:3, matrix(1:25, ncol = 5))
+head(mylist)
+
+# tres formas de tomar el primer elemento de la lista
+mylist[1]
+mylist$letters
+mylist[[1]]
+```
+
+## Arreglar vectores de carácteres - `sapply()`
+
+Una cosa que podría querer hacer es eliminar todos los puntos y luego solo obtener la primera parte del nombre de la variable.
+
+* La función sapply() aplica una función a cada elemento de un vector o lista.
+* Parámetros importantes: X, FUN.
+
+```{r}
+splitNames[[6]][1]
+
+# Se puede hacer una función que tome solo primeros elementos y luego aplicarla a los nombres de las variables
+firstElement <- function(x){x[1]}
+sapply(splitNames,firstElement)
+```
+
+## Revisión por pares de datos 
+
+```{r}
+# las revisiones es el conjunto de problemas que han sido revisados por pares en el experimento y las soluciones es el conjunto de preguntas SAT que han sido enviadas por personas
+reviews <- read.csv("./data/reviews.csv")
+solutions <- read.csv("./data/solutions.csv")
+head(reviews,2)
+head(solutions,2)
+```
+## Arreglar vectores de carácteres - `sub()`, `gsub()`
+
+* Parámetros importantes: pattern, replacement, x.
+
+```{r}
+names(reviews)
+
+# la funcion sub() nos ayda a sustituir carácteres
+sub("_","",names(reviews),)
+```
+
+También se puede usar la función `gsub()` para reemplazar múltiples instancias de un carácter en particular.
+
+```{r}
+testName <- "this_is_a_test"
+# este solo reemplaza la primera coincidencia del carácter
+sub("_","",testName)
+# reemplaza todas la coincidencias del carácter
+gsub("_","",testName)
+```
+
+## Encontrar valores - `grep()`, `grepl()`
+
+Para buscar valores específicos en nombres de variables, o en variables.
+
+```{r}
+# encontrar todas las intersecciones que incluyen la Alameda como una de las carreteras
+grep("Alameda",cameraData$intersection)
+
+# La otra cosa que puedo usar es el comando grepl, devolverá un vector que sea verdadero cuando aparezca Alameda y falso cuando no aparezca Alameda, si se hace una tabla de los valores verdadero y falso, es cierto tres veces.
+table(grepl("Alameda",cameraData$intersection))
+
+# se puede hacer una especie de subconjunto. Supongamos que se quiere encontrar todos los casos en los que aparece Alameda en la intersección. Y luego,  si Alameda no aparece, entonces se quiere hacer algo solo a ese subconjunto de datos. 
+cameraData2 <- cameraData[!grepl("Alameda",cameraData$intersection),]
+```
+
+Por lo tanto, se puede usar la función `grepl()` para hacer subconjuntos de datos en función de ciertas búsquedas que se deseen encontrar.
+
+```{r}
+# al usar value = TRUE en la función grep, en lugar de decir en qué elementos aparece Alameda, en realidad devolverá los valores donde aparece Alameda
+grep("Alameda",cameraData$intersection,value=TRUE)
+
+# Tambien se puede hacer una busqueda de valores que no aparecen
+grep("JeffStreet",cameraData$intersection)
+length(grep("JeffStreet",cameraData$intersection))
+```
+
+## Más funciones útiles de carácteres 
+
+```{r}
+library(stringr)
+# nchar cuenta el numero de caracteres que hay en una cadena
+nchar("Jeffrey Leek")
+
+# Obtiene la subcadena de caracteres especificada de una cadena de caracteres
+substr("Jeffrey Leek",1,7)
+
+# Pega dos cadenas, se puede cambiar la separacion con el argumento sep
+paste("Jeffrey","Leek")
+
+# Pega dos cadenas, se puede cambiar la separacion con el argumento sep, paste0 pega las dos cadenas sin separación por defecto
+paste0("Jeffrey","Leek")
+
+# quita espacios excedentes de una cadena de carácteres
+str_trim("Jeff      ")
+```
+
+
+## Puntos importantes sobre el texto en conjuntos de datos
+
+* Los nombres de las variables deben ser:
+  * Todo en minúsculas cuando sea posible.
+  * Descriptivo (Diagnóstico versus Dx).
+  * No duplicado.
+  * No tiene guiones bajos ni puntos ni espacios en blanco.
+* Variables con valores de caracteres:
+  * Por lo general, debe convertirse en variables de factores (depende de la aplicación).
+  * Debe ser descriptivo (use VERDADERO / FALSO en lugar de 0/1 y Masculino / Femenino versus 0/1 o M / F).
+
+# Expresiones regulares (Resumen)
+
+- Las expresiones regulares se usan en muchos idiomas diferentes; no es exclusivo de R.
+- Las expresiones regulares se componen de literales y metacaracteres que representan conjuntos o clases de caracteres / palabras.
+- El procesamiento de texto a través de expresiones regulares es una forma muy poderosa de extraer datos de fuentes "hostiles" (no todos los datos vienen como un archivo CSV).
+- Se utiliza con las funciones `grep`,` grepl`, `sub`,` gsub` y otras que implican la búsqueda de cadenas de texto.
+
+# Trabajo con fechas 
+
+```{r}
+d1 <- date()
+d1
+d2 <- Sys.Date()
+d2
+```
+
+## Formato de fechas 
+
+* `% d` = día como número (0-31).
+* `% a` = día de la semana abreviado.
+* `% A` = día de la semana no abreviado.
+* `% m` = mes como número (00-12).
+* `% b` = mes abreviado.
+* `% B` = mes no abreviado.
+* `% y` = año de 2 dígitos.
+* `% Y` = año de cuatro dígitos.
+
+```{r}
+format(d2,"%a %b %d")
+```
+
+## Creación de fechas 
+
+```{r}
+lct <- Sys.getlocale("LC_TIME"); Sys.setlocale("LC_TIME", "C")
+x <- c("1jan1960", "2jan1960", "31mar1960", "30jul1960")
+z <- as.Date(x, "%d%b%Y")
+
+z[1] - z[2]
+```
+
+## Conversión a Julian
+
+```{r}
+# Esta funcion entrega el día de la semana
+weekdays(d2)
+
+# Esta función entrega el mes del año
+months(d2)
+
+# Pasa una fecha a formato julian, que es el número de días desde el origen, también se muestra la fecha del origen
+julian(d2)
+```
+
+```{r}
+library(lubridate)
+
+# año-mes-dia 
+ymd("20140108")
+# mes-dia-año
+mdy("08/04/2013")
+# dia-mes-año
+dmy("03-04-2013")
+```
+
+# Trabajo con horas 
+
+```{r}
+# año-mes-dia_horas-minutos-segundos
+ymd_hms("2011-08-03 10:15:03")
+
+# cambio de la zona horaria
+ymd_hms("2011-08-03 10:15:03",tz="Pacific/Auckland")
+?Sys.timezone
+```
+
+Si desea obtener más información sobre cómo establecer zonas horarias y qué zonas horarias son, se puede consultar `?Sys.timezone`.
+
+## Algunas funciones tienen una sintaxis ligeramente diferente
+
+```{r}
+x = dmy(c("1jan2013", "2jan2013", "31mar2013", "30jul2013"))
+wday(x[1])
+wday(x[1],label=TRUE)
+```
+
+[http://en.wikipedia.org/wiki/List_of_tz_database_time_zones](http://en.wikipedia.org/wiki/List_of_tz_database_time_zones)
+
+## Notas y otros recursos 
+
+* Más información en este buen tutorial sobre lubridate [http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/](http://www.r-statistics.com/2012/03/do-more-with-dates-and-times-in-r-with-lubridate-1-1-0/)
+* viñeta sobre lubridate [http://cran.r-project.org/web/packages/lubridate/vignettes/lubridate.html](http://cran.r-project.org/web/packages/lubridate/vignettes/lubridate.html)
+* En última instancia, desea sus fechas y horas como clase "Fecha" o las clases "POSIXct", "POSIXlt". Para más información, consultar `?POSIXlt`.
+
+# Recursos de datos 
+
+## Sitios abiertos del gobierno 
+
+* United Nations [http://data.un.org/](http://data.un.org/)
+* U.S. [http://www.data.gov/](http://www.data.gov/)
+  * [List of cities/states with open data](http://simplystatistics.org/2012/01/02/list-of-cities-states-with-open-data-help-me-find/)
+* United Kingdom [http://data.gov.uk/](http://data.gov.uk/)
+* France [http://www.data.gouv.fr/](http://www.data.gouv.fr/)
+* Ghana [http://data.gov.gh/](http://data.gov.gh/)
+* Australia [http://data.gov.au/](http://data.gov.au/)
+* Germany [https://www.govdata.de/](https://www.govdata.de/) 
+* Hong Kong [http://www.gov.hk/en/theme/psi/datasets/](http://www.gov.hk/en/theme/psi/datasets/)
+* Japan [http://www.data.go.jp/](http://www.data.go.jp/)
+* Many more [http://www.data.gov/opendatasites](http://www.data.gov/opendatasites)
+
+## Gapminder 
+
+[http://www.gapminder.org/](http://www.gapminder.org/)
+
+
+## Datos de encuestas de los Estados Unidos 
+
+[http://www.asdfree.com/](http://www.asdfree.com/) 
+
+## Mercado de Infochimps 
+
+[http://www.infochimps.com/marketplace](http://www.infochimps.com/marketplace)
+
+## Kaggle 
+
+[http://www.kaggle.com/](http://www.kaggle.com/) 
+
+## Colecciones de científicos de datos 
+
+* Hilary Mason http://bitly.com/bundles/hmason/1
+* Peter Skomoroch https://delicious.com/pskomoroch/dataset
+* Jeff Hammerbacher http://www.quora.com/Jeff-Hammerbacher/Introduction-to-Data-Science-Data-Sets
+* Gregory Piatetsky-Shapiro http://www.kdnuggets.com/gps.html
+* [http://blog.mortardata.com/post/67652898761/6-dataset-lists-curated-by-data-scientists](http://blog.mortardata.com/post/67652898761/6-dataset-lists-curated-by-data-scientists) 
+
+## Colecciones más especializadas
+
+* [Stanford Large Network Data](http://snap.stanford.edu/data/)
+* [UCI Machine Learning](http://archive.ics.uci.edu/ml/)
+* [KDD Nugets Datasets](http://www.kdnuggets.com/datasets/index.html)
+* [CMU Statlib](http://lib.stat.cmu.edu/datasets/)
+* [Gene expression omnibus](http://www.ncbi.nlm.nih.gov/geo/)
+* [ArXiv Data](http://arxiv.org/help/bulk_data)
+* [Public Data Sets on Amazon Web Services](http://aws.amazon.com/publicdatasets/)
+
+## Algunas API's con interfaces para R
+
+* [twitter](https://dev.twitter.com/) and [twitteR](http://cran.r-project.org/web/packages/twitteR/index.html) package
+* [figshare](http://api.figshare.com/docs/intro.html) and [rfigshare](http://cran.r-project.org/web/packages/rfigshare/index.html)
+* [PLoS](http://api.plos.org/) and [rplos](http://cran.r-project.org/web/packages/rplos/rplos.pdf)
+* [rOpenSci](http://ropensci.org/packages/index.html)
+* [Facebook](https://developers.facebook.com/) and [RFacebook](http://cran.r-project.org/web/packages/Rfacebook/)
+* [Google maps](https://developers.google.com/maps/) and [RGoogleMaps](http://cran.r-project.org/web/packages/RgoogleMaps/index.html)

@@ -1,0 +1,251 @@
+---
+title: 'Semana 3.1'
+author: "Stephany Michell Lobo Laguado"
+date: "30/6/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Subsetting and Sorting
+
+## Subsetting 
+
+```{r}
+set.seed(13435)
+X <- data.frame("var1"=sample(1:5),"var2"=sample(6:10),"var3"=sample(11:15))
+X
+X <- X[sample(1:5),]; X$var2[c(1,3)] = NA
+X
+```
+
+```{r}
+X[,1]
+X[,"var1"]
+X[1:2,"var2"]
+```
+
+## Logicals ands and ors
+
+```{r}
+X[(X$var1 <= 3 & X$var3 > 11),]
+X[(X$var1 <= 3 | X$var3 > 15),]
+```
+
+## Dealing with missing values
+
+```{r}
+# La función which devuelve los índices que cumplen con la condición
+X[which(X$var2 > 8),]
+```
+
+## Sorting
+
+```{r}
+# la función sort() por defecto funciona de forma creciente
+sort(X$var1)
+# así se usa para ordenar de forma decreciente 
+sort(X$var1,decreasing=TRUE)
+# la argumento na.last en la función sort coloca los valores NA al final
+sort(X$var2,na.last=TRUE)
+```
+
+## Ordering
+
+Se puede ordenar un data frame de acuerdo a una variable en particular:
+```{r}
+X[order(X$var1),]
+```
+
+También se puede ordenar de acuerdo a múltiples variables, la primera variable específicada es para la que se ordena de forma creciente y luego, si hay valores repetidos en esta varaible, se ordena de acuerdo a la segunda variable específicada. 
+
+```{r}
+X[order(X$var1,X$var3),]
+```
+
+## Ordering with plyr
+
+```{r ,dependson="subsetting"}
+library(plyr)
+# función de ordenación del paquete plyr
+arrange(X,var1)
+# función de ordenación del paquete plyr - ordenación decreciente
+arrange(X,desc(var1))
+```
+
+## Adding rows and columns
+
+```{r,dependson="subsetting"}
+X$var4 <- rnorm(5)
+X
+# También se puede añadir columnas con la función cbind()
+Y <- cbind(X,rnorm(5))
+Y
+# la función rbind() lo que hace es añadir filas
+```
+
+## Notas y otros recursos
+
+* Andrew Jaffe's lecture notes [http://www.biostat.jhsph.edu/~ajaffe/lec_winterR/Lecture%202.pdf](http://www.biostat.jhsph.edu/~ajaffe/lec_winterR/Lecture%202.pdf)
+
+# Summarizing data
+
+```{r}
+restdata <- read.csv("./data/RestaurantsWeek3.csv")
+
+# Look at a bit of the data
+head(restdata,n=3)
+tail(restdata,n=3)
+
+# make summary
+summary(restdata)
+
+# More in depth information
+str(restdata)
+
+# Quantiles of quantitative variables
+quantile(restdata$councilDistrict,na.rm=TRUE)
+quantile(restdata$councilDistrict,probs=c(0.5,0.75,0.9))
+
+```
+
+## Make tables
+
+```{r}
+# se crea una tabla teniendo en cuenta las ocurrencias de la variable zipcode y el argumento useNA="ifany" lo que hace es añadir una columna más a la tabla en la que se cuentan las ocurrencias de NA's para esta variable si las hay, por defecto la función table() no hace esto con los valores por defecto
+table(restdata$zipCode,useNA="ifany")
+
+# También se pueden hacer tablas de dos dimensiones, tomando de a dos variables; esto permite visualizar algunas correlaciones entre variables
+
+# table(restdata$councilDistrict,restdata$zipCode)
+```
+
+## Check for missing values
+
+Una de las funciones más útiles para esto es `is.na()`
+```{r}
+sum(is.na(restdata$councilDistrict))
+
+# si hay algún valor faltante, la función any() retornarÃ¡ TRUE
+any(is.na(restdata$councilDistrict))
+
+# la función all funciona similar a la función if() y puede verificar condiciones 
+all(restdata$zipCode > 0)
+```
+
+## Row and column sums
+
+```{r}
+# la función colSums() aquí suma todos los valores verdaderos, para todas las columnas es cero ya que siempre es FALSE porque no tenemos valores faltantes en el data frame
+colSums(is.na(restdata))
+```
+
+## Values with specific characteristics
+
+```{r,dependson="getData"}
+# los siguientes comandos muestran cuántos datos tienen un zipcode específico y luego si tienen uno u otro.
+table(restdata$zipCode %in% c("21212"))
+table(restdata$zipCode %in% c("21212","21213"))
+
+# podemos sacar un subconjuntos de los datos tomando la condición de los comandos anteriores. Este comando saca las filas de datos que tienen alguno de los zipcodes específicados 
+head(restdata[restdata$zipCode %in% c("21212","21213"),])
+```
+## Cross tabs
+
+```{r adm}
+data(UCBAdmissions)
+DF = as.data.frame(UCBAdmissions)
+summary(DF)
+
+# esta es una forma de hacer una tabla cruzada que nos permite ver las relaciones existentes entre las variables de la base de datos. A la izquierda va la variable que se quiere monitorear a través de la tabla y a laderecha se ponern las variables para las cuales se quiere visualizar el comportamiento de la variable anterior
+xt <- xtabs(Freq ~ Gender + Admit,data=DF)
+xt
+```
+
+## Flat tables
+
+También se puede hacer tablas cruzadas para un gran número de variables, aunque son un poco más difíciles de visualizar, ya que lo que sucede es que se crean múltiples tablas de dos dimensiones.
+
+```{r wb}
+warpbreaks$replicate <- rep(1:9, len = 54)
+xt = xtabs(breaks ~.,data=warpbreaks)
+xt
+```
+
+También se pueden hacer tablas cruzadas siguiendo la forma anterior, aplicando el comando `ftable()`. Lo que esto hace es resumir los datos de una forma más pequeña y compacta.
+
+```{r}
+ftable(xt)
+```
+
+## Size of a data set
+
+
+```{r}
+fakeData = rnorm(1e5)
+object.size(fakeData)
+
+# se hace un cambio en las unidades del tamaño de los datos
+print(object.size(fakeData),units="Mb")
+```
+
+# Creating new variables
+
+
+## ¿Por qué crear nuevas variables?
+
+* A menudo, los datos sin procesar no tendrán el valor que está buscando.
+* Necesitará transformar los datos para obtener los valores que desea
+* Por lo general, agregará esos valores a los marcos de datos con los que está trabajando
+* Variables comunes para crear
+  * Indicadores de falta
+  * Variables cuantitativas de "corte"
+  * Aplicando transformaciones.
+  
+```{r}
+restdata <- read.csv("./data/RestaurantsWeek3.csv")
+```
+
+## Creating sequences
+
+A veces se necesitan índices para las bases de datos.
+
+```{r}
+s1 <- seq(1,10,by=2); s1
+s2 <- seq(1,10,length=3); s2
+x <- c(1,3,8,25,100); seq(along = x)
+```
+
+## Subsetting variables
+
+Se pueden crear variables a partir de subconjuntos de los datos, con la utilización de condiciones. 
+
+```{r}
+restdata$nearMe <- restdata$neighborhood %in% c("Roland Park", "Homeland")
+table(restdata$nearMe)
+```
+
+## Creating binary variables
+
+```{r}
+# con la funcion ifelse primero se envía la condición, luego el valor si la condición es verdadera y por ultimo el valor si la condicion es falsa.
+restdata$zipWrong <- ifelse(restdata$zipCode < 0, TRUE, FALSE)
+table(restdata$zipWrong,restdata$zipCode < 0)
+```
+
+## Creating categorical variables
+
+Se pueden crear variables categóricas a partir de variables cuantitativas por medio de agrupación.
+
+```{r}
+restdata$zipGroups <- cut(restdata$zipCode,breaks=quantile(restdata$zipCode))
+
+# tabla que permite ver los grupos que se crearon
+table(restdata$zipGroups)
+
+# tabla que permite ver a que grupo pertenecen cada uno de los codigos zip
+table(restdata$zipGroups,restdata$zipCode)
+```
+
