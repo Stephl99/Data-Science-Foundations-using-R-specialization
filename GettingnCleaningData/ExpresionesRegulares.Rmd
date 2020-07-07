@@ -1,0 +1,313 @@
+---
+title: "Semana 4 - Expresiones regulares"
+author: "Stephany Michell Lobo Laguado"
+date: "4/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Expresiones regulares I
+
+- Las expresiones regulares pueden considerarse como una combinación de literales y _metacaracteres_.
+- Para hacer una analogía con el lenguaje natural, se puede pensar en el texto literal que forma las palabras de este idioma y en los metacaracteres que definen su gramática.
+- Las expresiones regulares tienen un rico conjunto de metacaracteres.
+
+## Literales
+
+El patrón más simple consiste solo en literales. El literal "nuclear" coincidiría con las siguientes líneas:
+
+```markdown
+Ooh. I just learned that to keep myself alive after a
+nuclear blast! All I have to do is milk some rats
+then drink the milk. Aweosme. :}
+
+Laozi says nuclear weapons are mas macho
+
+Chaos in a country that has nuclear weapons -- not good.
+
+my nephew is trying to teach me nuclear physics, or
+possibly just trying to show me how smart he is
+so I’ll be proud of him [which I am].
+
+lol if you ever say "nuclear" people immediately think
+DEATH by radiation LOL
+```
+
+- El patrón más simple consiste solo en literales; se produce una coincidencia si la secuencia de literales ocurre en cualquier parte del texto que se está probando.
+
+Necesitamos una forma de expresar:
+
+- límites de palabras en espacios en blanco
+- conjuntos de literales
+- el principio y el final de una línea
+- alternativas ("guerra" o "paz")
+¡Metacaracteres al rescate!
+
+## Metacarácteres 
+
+^ representa el inicio de una línea.
+
+```markdown
+^i think
+```
+
+coincidirá con las líneas:
+
+```markdown
+i think we all rule for participating
+i think i have been outed
+i think this will be quite fun actually
+i think i need to go to work
+i think i first saw zombo in 1999.
+```
+
+$ representa el final de una línea.
+
+```markdown
+morning$
+```
+coincidirá con las líneas:
+
+```markdown
+well they had something this morning
+then had to catch a tram home in the morning
+dog obedience school in the morning
+and yes happy birthday i forgot to say it earlier this morning
+I walked in the rain this morning
+good morning
+```
+
+## Clases de carácteres con [] 
+
+Podemos enumerar un conjunto de caracteres que aceptaremos en un punto dado de coincidencia. Las siguientes líneas coincidirán con cualquiera de las formas de la palabra bush
+
+```markdown
+[Bb][Uu][Ss][Hh]
+```
+coincidirá con las líneas:
+
+```markdown
+The democrats are playing, "Name the worst thing about Bush!"
+I smelled the desert creosote bush, brownies, BBQ chicken
+BBQ and bushwalking at Molonglo Gorge
+Bush TOLD you that North Korea is part of the Axis of Evil
+I’m listening to Bush - Hurricane (Album Version)
+```
+
+```markdown
+^[Ii] am
+```
+coincidirá con:
+
+```markdown
+i am so angry at my boyfriend i can’t even bear to
+look at him
+
+i am boycotting the apple store
+
+I am twittering from iPhone
+
+I am a very vengeful person when you ruin my sweetheart.
+
+I am so over this. I need food. Mmmm bacon...
+```
+Del mismo modo, se puede especificar un rango de letras [a-z] o [a-zA-Z]; se debe tener en cuenta que el orden no importa.
+
+```markdown
+^[0-9][a-zA-Z]
+```
+coincidirá con las líneas:
+
+```markdown
+7th inning stretch
+2nd half soon to begin. OSU did just win something
+3am - cant sleep - too hot still.. :(
+5ft 7 sent from heaven
+1st sign of starvagtion
+```
+Cuando se usa al comienzo de una clase de caracteres, el "\ ^" también es un metacaracter e indica caracteres coincidentes que NO están en la clase indicada.
+
+```markdown
+[^?.]$
+```
+coincidirá con las líneas:
+
+```markdown
+i like basketballs
+6 and 9
+dont worry... we all die anyway!
+Not in Baghdad
+helicopter under water? hmmm
+```
+# Expresiones regulares II
+
+
+"." se usa para referirse a cualquier carácter. Entonces
+
+```markdown
+9.11
+```
+coincidirá con las líneas:
+
+```markdown
+its stupid the post 9-11 rules
+if any 1 of us did 9/11 we would have been caught in days.
+NetBios: scanning ip 203.169.114.66
+Front Door 9:11:46 AM
+Sings: 0118999881999119725...3 !
+```
+Esto no significa "tubería" en el contexto de expresiones regulares; en su lugar, se traduce como "o"; podemos usarlo para combinar dos expresiones, las subexpresiones se denominan alternativas. Podemos incluir cualquier número de alternativas.
+
+```markdown
+flood|fire
+```
+coincidirá con las líneas:
+
+```markdown
+is firewire like usb on none macs?
+the global flood makes sense within the context of the bible
+yeah ive had the fire on tonight
+... and the floods, hurricanes, killer heatwaves, rednecks, gun nuts, etc.
+```
+Las alternativas pueden ser expresiones reales y no solo literales.
+
+```markdown
+^[Gg]ood|[Bb]ad
+```
+coincidirá con las líneas:
+
+```markdown
+good to hear some good knews from someone here
+Good afternoon fellow american infidels!
+good on you-what do you drive?
+Katie... guess they had bad experiences...
+my middle name is trouble, Miss Bad News
+```
+Las subexpresiones a menudo se encuentran entre paréntesis para restringir las alternativas.
+
+```markdown
+^([Gg]ood|[Bb]ad)
+```
+coincidirá con las líneas:
+
+```markdown
+bad habbit
+bad coordination today
+good, becuase there is nothing worse than a man in kinky underwear
+Badcop, its because people want to use drugs
+Good Monday Holiday
+Good riddance to Limey
+```
+
+El signo de interrogación indica que la expresión indicada es opcional. En el ejemplo, es opcional encontrar "W.". El \ indica que se debe considerar al punto como el carácter "." y no como metacarácter. En general, tenemos que hacer esto para cualquier metacarácter que queramos incluir en nuestra coincidencia.
+
+```markdown
+[Gg]eorge( [Ww]\.)? [Bb]ush
+```
+coincidirá con las líneas:
+
+```markdown
+i bet i can spell better than you and george bush combined
+BBC reported that President George W. Bush claimed God told him to invade I
+a bird in the hand is worth two george bushes
+```
+Los signos * y + son metacaracteres utilizados para indicar la repetición; * significa "cualquier número, incluido ninguno, del artículo" y + significa "al menos uno del artículo". En el ejemplo se está buscando algo que esté dentro de paréntesis.
+
+```markdown
+(.*)
+```
+coincidirá con las líneas:
+
+```markdown
+anyone wanna chat? (24, m, germany)
+hello, 20.m here... ( east area + drives + webcam )
+(he means older men)
+()
+```
+Este ejemplo lo que hace es decir: se busca al menos un numero seguido por algún número de carácteres, y esto seguido de nuevo por al menos algún número.
+
+```markdown
+[0-9]+ (.*)[0-9]+
+```
+coincidirá con las líneas:
+
+```markdown
+working as MP here 720 MP battallion, 42nd birgade
+so say 2 or 3 years at colleage and 4 at uni makes us 23 when and if we fin
+it went down on several occasions for like, 3 or 4 *days*
+Mmmm its time 4 me 2 go 2 bed
+```
+## Más metacaracteres: { and }
+
+{and} se denominan cuantificadores de intervalo; especificamos el número mínimo y máximo de coincidencias de una expresión. El ejemplo busca la palabra bush, ya sea mayúscula o minúscula. Y al final debate. Entre lo que se busca hay al menos un espacio, seguido por algo que no es un espacio, seguido por al menos un espacio, y ver eso entre una y cinco veces. 
+
+```markdown
+[Bb]ush( +[^ ]+ +){1,5} debate
+```
+coincidirá con la líneas:
+
+```markdown
+Bush has historically won all major debates he’s done.
+in my view, Bush doesn’t need these debates..
+bush doesn’t need the debates? maybe you are right
+That’s what Bush supporters are doing about the debate.
+Felix, I don’t disagree that Bush was poorly prepared for the debate.
+indeed, but still, Bush should have taken the debate more seriously.
+Keep repeating that Bush smirked and scowled during the debate
+```
+
+- m, n significa al menos m pero no más de n coincidencias.
+- m significa exactamente m coincidencias.
+- m, significa al menos m coincidencias.
+
+
+- En la mayoría de las implementaciones de expresiones regulares, los paréntesis no solo limitan el alcance de las alternativas divididas por un "|", sino que también se pueden usar para "recordar" el texto que coincide con la subexpresión adjunta
+- Texto coincidente con \ 1, \ 2, etc.
+
+Entonces la expresión
+
+```markdown
++([a-zA-Z]+) +\1 +
+```
+Busca espacio seguido de algunos, al menos uno, pero posiblemente más caracteres seguidos de al menos un espacio seguido de la misma coincidencia que vimos dentro del paréntesis.
+
+```markdown
+time for bed, night night twitter!
+blah blah blah blah
+my tattoo is so so itchy today
+i was standing all all alone against the world outside...
+hi anybody anybody at home
+estudiando css css css css.... que desastritooooo
+```
+
+El * es "codicioso", por lo que siempre coincide con la cadena más larga posible que satisface la expresión regular. Entonces
+
+```markdown
+^s(.*)s
+```
+coincide con
+
+```markdown
+sitting at starbucks
+setting up mysql and rails
+studying stuff for the exams
+spaghetti with marshmallows
+stop fighting with crackers
+sore shoulders, stupid ergonomics
+```
+
+La codicia de * se puede desactivar con el?, Como en
+
+```markdown
+^s(.*?)s$
+```
+
+## Resumen
+
+- Las expresiones regulares se usan en muchos idiomas diferentes; no es exclusivo de R.
+- Las expresiones regulares se componen de literales y metacaracteres que representan conjuntos o clases de caracteres / palabras.
+- El procesamiento de texto a través de expresiones regulares es una forma muy poderosa de extraer datos de fuentes "hostiles" (no todos los datos vienen como un archivo CSV).
+- Se utiliza con las funciones `grep`,` grepl`, `sub`,` gsub` y otras que implican la búsqueda de cadenas de texto.
